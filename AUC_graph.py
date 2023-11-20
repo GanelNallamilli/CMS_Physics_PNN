@@ -28,7 +28,9 @@ GluGluToRadionToHHTo2G2Tau_M_900_AUC = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M
 GluGluToRadionToHHTo2G2Tau_M_800_AUC = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M_800_AUC.csv")
 GluGluToRadionToHHTo2G2Tau_M_1000_AUC = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M_1000_AUC.csv")
 
-print(GluGluToRadionToHHTo2G2Tau_M_300_AUC.head())
+GluGluToRadionToHHTo2G2Tau_M_300_AUC.to_dict()
+
+print(GluGluToRadionToHHTo2G2Tau_M_300_AUC.to_dict())
 
 GluGluToRadionToHHTo2G2Tau_M_300_AUC_np = (GluGluToRadionToHHTo2G2Tau_M_300_AUC.iloc[0]).to_numpy()
 GluGluToRadionToHHTo2G2Tau_M_400_AUC_np = (GluGluToRadionToHHTo2G2Tau_M_400_AUC.iloc[0]).to_numpy()
@@ -36,6 +38,13 @@ GluGluToRadionToHHTo2G2Tau_M_600_AUC_np = (GluGluToRadionToHHTo2G2Tau_M_600_AUC.
 GluGluToRadionToHHTo2G2Tau_M_900_AUC_np = (GluGluToRadionToHHTo2G2Tau_M_900_AUC.iloc[0]).to_numpy()
 GluGluToRadionToHHTo2G2Tau_M_800_AUC_np = (GluGluToRadionToHHTo2G2Tau_M_800_AUC.iloc[0]).to_numpy()
 GluGluToRadionToHHTo2G2Tau_M_1000_AUC_np = (GluGluToRadionToHHTo2G2Tau_M_1000_AUC.iloc[0]).to_numpy()
+
+temp_dict = {'Features': feature_list, 'GluGluToRadionToHHTo2G2Tau_M_300':GluGluToRadionToHHTo2G2Tau_M_300_AUC_np,
+             'GluGluToRadionToHHTo2G2Tau_M_400':GluGluToRadionToHHTo2G2Tau_M_400_AUC_np, 'GluGluToRadionToHHTo2G2Tau_M_600':GluGluToRadionToHHTo2G2Tau_M_600_AUC_np,
+             'GluGluToRadionToHHTo2G2Tau_M_900':GluGluToRadionToHHTo2G2Tau_M_900_AUC_np,'GluGluToRadionToHHTo2G2Tau_M_800':GluGluToRadionToHHTo2G2Tau_M_800_AUC_np,
+             'GluGluToRadionToHHTo2G2Tau_M_1000':GluGluToRadionToHHTo2G2Tau_M_1000_AUC_np}
+
+temp_dict_df = pd.DataFrame(data=temp_dict)
 
 print(GluGluToRadionToHHTo2G2Tau_M_300_AUC_np)
 
@@ -48,3 +57,25 @@ plt.plot(GluGluToRadionToHHTo2G2Tau_M_900_AUC_np, marker = 'x', label = 'GluGluT
 plt.plot(GluGluToRadionToHHTo2G2Tau_M_1000_AUC_np, marker = 'x', label = 'GluGluToRadionToHHTo2G2Tau_M_1000_AUC')
 plt.legend()
 plt.show()
+
+
+#%%
+
+
+
+reorder_dict_df=temp_dict_df.sort_values(by=['GluGluToRadionToHHTo2G2Tau_M_1000'], ascending=False)
+i=0
+
+for columns in reorder_dict_df.columns:
+    if i>0:            
+        plt.plot(reorder_dict_df['Features'],reorder_dict_df[columns])
+        plt.scatter(reorder_dict_df['Features'],reorder_dict_df[columns],label=f'{columns}')
+        plt.ylabel('AUC Score',fontsize=10)
+        plt.xlabel('Event Features',fontsize=10)
+        plt.title('Plot of features against their AUC scores (sorted by M=1000 GeV)',fontsize=15)
+        plt.legend(fontsize=10)
+        plt.tight_layout()
+        plt.xticks(rotation=90,fontsize=10)
+        plt.yticks(fontsize=10)
+        plt.grid()
+    i+=1
