@@ -62,9 +62,6 @@ class SimpleNN(nn.Module):
         x = self.fc1(x)
         x = self.relu1(x)
         x = self.fc2(x)
-        x = self.fc3(x)
-        x = self.relu2(x)
-        x = self.fc4(x)
         return x
 
 # Create an instance of the neural network
@@ -100,3 +97,65 @@ for epoch in range(num_epochs):
 
     # Print loss
     print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
+    
+#%%
+
+class SimpleNN(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(SimpleNN, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)  # Input layer to hidden layer
+        self.relu1 = nn.ReLU()  # Activation function
+        self.fc2 = nn.Linear(hidden_size, output_size)  # Hidden layer to output layer
+        
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu1(x)
+        x = self.fc2(x)
+        x = torch.sigmoid(x)
+        return x
+    
+
+    def weightedBCELoss(self, input, target, weight):
+      x, y, w = input, target, weight
+      log = lambda x: torch.log(x*(1-1e-8) + 1e-8)
+      #return torch.mean(-w * (y*log(x) + (1-y)*log(1-x)))
+      return -w * (y*log(x) + (1-y)*log(1-x))
+
+
+"""
+Writing practicing
+"""
+# =============================================================================
+#     def batch_weightedBCELoss(self, input, target, weight, batch_size):
+# #batch_weightedBCELoss(self, train, train_labels_tensor, train_weights_tensor, batch_size)
+#         self.batch_size=batch_size
+# 
+#        # train=model.forward(input)
+# 
+#         total_batch_err=torch.empty(0,1)
+#         output_length=input.shape[0]
+#         batch_remainder=output_length%batch_size
+# 
+#         for i in range(0, output_length//batch_size):
+#             weights = weight[i*(batch_size):(i+1)*(batch_size), :]
+#             labels = target[i*(batch_size):(i+1)*(batch_size), :]
+#             inputs = input[i*(batch_size):(i+1)*(batch_size), :]
+# 
+#             loss=self.weightedBCELoss(inputs, labels, weights)
+# 
+#             total_batch_err=torch.cat((total_batch_err,loss)) 
+#             print(total_batch_err.shape[0])
+# 
+#         if batch_remainder > 0:
+#             weights = weight[(output_length//batch_size)*batch_size:, :]
+#             labels = target[(output_length//batch_size)*batch_size:, :]
+#             inputs = input[(output_length//batch_size)*batch_size:, :]
+# 
+#             loss=self.weightedBCELoss(inputs, labels, weights)
+# 
+#             #weights = train_weights_tensor[(train_weights_tensor.shape[0]//batch_size)*batch_size:, :]
+#             total_batch_err=torch.cat((total_batch_err,loss))
+#             print(total_batch_err.shape[0])
+#             
+#         return torch.mean(total_batch_err)
+# =============================================================================
