@@ -25,7 +25,7 @@ def separate_output_score(output_score,y):
 
 feature_info = pd.read_csv("ROC_feature_info.csv")
 
-signal_df, background_df, combine_df = te.read_dataframes(signal_name = 'GluGluToRadionToHHTo2G2Tau_M-1000')
+signal_df, background_df, combine_df = te.read_dataframes(signal_name = 'GluGluToRadionToHHTo2G2Tau_M-800')
 
 x_train,x_test = te.getTrainTestSplit(combine_df)
 feature_list = ['Diphoton_mass', 'Diphoton_pt_mgg', 'Diphoton_dPhi',
@@ -37,6 +37,8 @@ feature_list = ['Diphoton_mass', 'Diphoton_pt_mgg', 'Diphoton_dPhi',
        'Diphoton_lead_lepton_dR', 'Diphoton_sublead_lepton_deta',
        'Diphoton_sublead_lepton_dR', 'LeadPhoton_ditau_dR',
        'LeadPhoton_lead_lepton_dR', 'SubleadPhoton_lead_lepton_dR']
+
+feature_list = ['MET_pt']
 
 dict = {}
 for name in feature_list:
@@ -101,9 +103,10 @@ for name in feature_list:
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristic')
     plt.legend(loc="lower right")
+    plt.show()
 
 
-with open('GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
+with open('GluGluToRadionToHHTo2G2Tau_M_800_AUC_NN.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
     w = csv.DictWriter(f, dict.keys())
     w.writeheader()
     w.writerow(dict)
