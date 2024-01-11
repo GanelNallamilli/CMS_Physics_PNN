@@ -22,7 +22,7 @@ feature_list = ['Diphoton_mass', 'Diphoton_pt_mgg', 'Diphoton_dPhi',
        'LeadPhoton_lead_lepton_dR', 'SubleadPhoton_lead_lepton_dR']
 
 
-GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN.csv")
+GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M-1000_AUC_NN.csv")
 GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M-1000_AUC_Threshold.csv")
 
 GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold_np = (GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold.iloc[0]).to_numpy()
@@ -40,7 +40,7 @@ temp_dict_df = pd.DataFrame(data=temp_dict)
 # plt.legend()
 # plt.show()
 
-reorder_dict_df=temp_dict_df.sort_values(by=['GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold'], ascending=False)
+reorder_dict_df=temp_dict_df.sort_values(by=['GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN'], ascending=False)
 i=0
 
 for columns in reorder_dict_df.columns:
