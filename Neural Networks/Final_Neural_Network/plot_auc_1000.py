@@ -40,7 +40,7 @@ temp_dict_df = pd.DataFrame(data=temp_dict)
 # plt.legend()
 # plt.show()
 
-reorder_dict_df=temp_dict_df.sort_values(by=['GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold'], ascending=False)
+reorder_dict_df=temp_dict_df.sort_values(by=['GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN'], ascending=False)
 i=0
 
 for columns in reorder_dict_df.columns:
@@ -59,24 +59,3 @@ for columns in reorder_dict_df.columns:
 
 plt.show()
 
-
-#%%
-
-
-
-reorder_dict_df=temp_dict_df.sort_values(by=['GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold'], ascending=False)
-i=0
-
-for columns in reorder_dict_df.columns:
-    if i>0:            
-        plt.plot(reorder_dict_df['Features'],reorder_dict_df[columns])
-        plt.scatter(reorder_dict_df['Features'],reorder_dict_df[columns],label=f'{columns}')
-        plt.ylabel('AUC Score',fontsize=10)
-        plt.xlabel('Event Features',fontsize=10)
-        plt.title('Plot of features against their AUC scores (sorted by M=1000 GeV)',fontsize=15)
-        plt.legend(fontsize=10)
-        plt.tight_layout()
-        plt.xticks(rotation=90,fontsize=10)
-        plt.yticks(fontsize=10)
-        plt.grid()
-    i+=1
