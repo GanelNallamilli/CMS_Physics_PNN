@@ -22,7 +22,7 @@ feature_list = ['Diphoton_mass', 'Diphoton_pt_mgg', 'Diphoton_dPhi',
        'LeadPhoton_lead_lepton_dR', 'SubleadPhoton_lead_lepton_dR']
 
 
-GluGluToRadionToHHTo2G2Tau_M_600_AUC_NN = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M_600_AUC_NN.csv")
+GluGluToRadionToHHTo2G2Tau_M_600_AUC_NN = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M-600_AUC_NN.csv")
 GluGluToRadionToHHTo2G2Tau_M_600_AUC_Threshold = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M-600_AUC_Threshold.csv")
 
 GluGluToRadionToHHTo2G2Tau_M_600_AUC_Threshold_np = (GluGluToRadionToHHTo2G2Tau_M_600_AUC_Threshold.iloc[0]).to_numpy()

@@ -21,15 +21,20 @@ feature_list = ['Diphoton_mass', 'Diphoton_pt_mgg', 'Diphoton_dPhi',
        'Diphoton_sublead_lepton_dR', 'LeadPhoton_ditau_dR',
        'LeadPhoton_lead_lepton_dR', 'SubleadPhoton_lead_lepton_dR']
 
+#Put the signal hypothesis mass here as a string and run the code.
+signal_mass = "260"
 
-GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M-1000_AUC_NN.csv")
-GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold = pd.read_csv("GluGluToRadionToHHTo2G2Tau_M-1000_AUC_Threshold.csv")
 
-GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold_np = (GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold.iloc[0]).to_numpy()
-GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN_np = (GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN.iloc[0]).to_numpy()
 
-temp_dict = {'Features': feature_list, 'GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold':GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold_np,
-             'GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN':GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN_np}
+signal = "GluGluToRadionToHHTo2G2Tau_M-"+signal_mass
+GluGluToRadionToHHTo2G2Tau_AUC_NN = pd.read_csv(f"{signal}_AUC_NN.csv")
+GluGluToRadionToHHTo2G2Tau_AUC_Threshold = pd.read_csv(f"{signal}_AUC_Threshold.csv")
+
+GluGluToRadionToHHTo2G2Tau_AUC_Threshold_np = (GluGluToRadionToHHTo2G2Tau_AUC_Threshold.iloc[0]).to_numpy()
+GluGluToRadionToHHTo2G2Tau_AUC_NN_np = (GluGluToRadionToHHTo2G2Tau_AUC_NN.iloc[0]).to_numpy()
+
+temp_dict = {'Features': feature_list, f'{signal}_AUC_Threshold':GluGluToRadionToHHTo2G2Tau_AUC_Threshold_np,
+             f'{signal}_AUC_NN':GluGluToRadionToHHTo2G2Tau_AUC_NN_np}
 
 temp_dict_df = pd.DataFrame(data=temp_dict)
 
@@ -40,7 +45,31 @@ temp_dict_df = pd.DataFrame(data=temp_dict)
 # plt.legend()
 # plt.show()
 
-reorder_dict_df=temp_dict_df.sort_values(by=['GluGluToRadionToHHTo2G2Tau_M_1000_AUC_NN'], ascending=False)
+reorder_dict_df=temp_dict_df.sort_values(by=[f'{signal}_AUC_NN'], ascending=False)
+i=0
+
+for columns in reorder_dict_df.columns:
+    if i>0:            
+        plt.plot(reorder_dict_df['Features'],reorder_dict_df[columns])
+        plt.scatter(reorder_dict_df['Features'],reorder_dict_df[columns],label=f'{columns}')
+        plt.ylabel('AUC Score',fontsize=10)
+        plt.xlabel('Event Features',fontsize=10)
+        plt.title(f'Plot of features against their AUC scores (sorted by M={signal_mass} GeV)',fontsize=15)
+        plt.legend(fontsize=10)
+        plt.tight_layout()
+        plt.xticks(rotation=90,fontsize=10)
+        plt.yticks(fontsize=10)
+        plt.grid()
+    i+=1
+
+plt.show()
+
+
+#%%
+
+
+
+reorder_dict_df=temp_dict_df.sort_values(by=['GluGluToRadionToHHTo2G2Tau_M_1000_AUC_Threshold'], ascending=False)
 i=0
 
 for columns in reorder_dict_df.columns:
@@ -56,6 +85,3 @@ for columns in reorder_dict_df.columns:
         plt.yticks(fontsize=10)
         plt.grid()
     i+=1
-
-plt.show()
-
