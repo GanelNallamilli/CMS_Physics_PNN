@@ -51,7 +51,7 @@ for signal_name in signal_names:
     for name in feature_list:
         epoch = 200
 
-        nodes = [5]
+        nodes = [64,64,32]
         models,epoch_loss_train,epoch_loss_test,output_score = te.trainNetwork(x_train, x_test, [name], 0.001, epoch = epoch, outdir=None, save_models=False, batch_size = 2048, nodes = nodes)
 
         test= np.linspace(min(combine_df[name]),max(combine_df[name]),10000).reshape(-1,1)
