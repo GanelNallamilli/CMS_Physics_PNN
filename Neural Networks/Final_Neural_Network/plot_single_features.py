@@ -39,6 +39,9 @@ feature_list = ['Diphoton_mass', 'Diphoton_pt_mgg', 'Diphoton_dPhi',
 signal_names = ["GluGluToRadionToHHTo2G2Tau_M-1000"]
 
 
+feature_list = ['MET_pt']
+
+
 for signal_name in signal_names:
     print(signal_name)
     signal_df, background_df, combine_df = te.read_dataframes(signal_name = signal_name)
@@ -48,7 +51,7 @@ for signal_name in signal_names:
     for name in feature_list:
         epoch = 200
 
-        nodes = [64,64,32]
+        nodes = [5]
         models,epoch_loss_train,epoch_loss_test,output_score = te.trainNetwork(x_train, x_test, [name], 0.001, epoch = epoch, outdir=None, save_models=False, batch_size = 2048, nodes = nodes)
 
         test= np.linspace(min(combine_df[name]),max(combine_df[name]),10000).reshape(-1,1)

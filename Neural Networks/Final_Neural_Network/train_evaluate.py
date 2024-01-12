@@ -87,16 +87,17 @@ def basicModel(features, nodes):
     length = len(features)
 
     n_nodes = [length] + nodes + [1]
-    middle_layers = []
+    layers = []
     for i in range(len(n_nodes)-1):
-        middle_layers.append(nn.Linear(n_nodes[i], n_nodes[i+1]))
-        middle_layers.append(nn.ReLU())  
+        if i == len(n_nodes)-2:
+            layers.append(nn.Linear(n_nodes[i], n_nodes[i+1]))
+            layers.append(nn.Sigmoid()) 
+        else:
+            layers.append(nn.Linear(n_nodes[i], n_nodes[i+1]))
+            layers.append(nn.ReLU())  
 
     model = nn.Sequential(
-        nn.BatchNorm1d(length),
-        *middle_layers,
-        nn.Flatten(0, 1),
-        nn.Sigmoid()
+        *layers
         )
     return model
 
