@@ -36,7 +36,8 @@ feature_list = ['Diphoton_mass', 'Diphoton_pt_mgg', 'Diphoton_dPhi',
        'Diphoton_sublead_lepton_dR', 'LeadPhoton_ditau_dR',
        'LeadPhoton_lead_lepton_dR', 'SubleadPhoton_lead_lepton_dR']
 
-signal_names = ["GluGluToRadionToHHTo2G2Tau_M-700", "GluGluToRadionToHHTo2G2Tau_M-750", "GluGluToRadionToHHTo2G2Tau_M-800", "GluGluToRadionToHHTo2G2Tau_M-900"]
+signal_names = ["GluGluToRadionToHHTo2G2Tau_M-1000"]
+
 
 for signal_name in signal_names:
     print(signal_name)
@@ -46,7 +47,9 @@ for signal_name in signal_names:
     dict = {}
     for name in feature_list:
         epoch = 200
-        models,epoch_loss_train,epoch_loss_test,output_score = te.trainNetwork(x_train, x_test, [name], 0.001, epoch = epoch, outdir=None, save_models=False, batch_size = 2048)
+
+        nodes = [64,64,32]
+        models,epoch_loss_train,epoch_loss_test,output_score = te.trainNetwork(x_train, x_test, [name], 0.001, epoch = epoch, outdir=None, save_models=False, batch_size = 2048, nodes = nodes)
 
         test= np.linspace(min(combine_df[name]),max(combine_df[name]),10000).reshape(-1,1)
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -109,7 +112,7 @@ for signal_name in signal_names:
         plt.ylabel('True Positive Rate')
         plt.title('Receiver Operating Characteristic')
         plt.legend(loc="lower right")
-
+        plt.show()
 
     with open(f'{signal_name}_AUC_NN.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
         w = csv.DictWriter(f, dict.keys())

@@ -83,13 +83,19 @@ def getBatches(arrays, batch_size=None):
         arrays_batch = [torch.Tensor(array[i:i+batch_size]).to(device) for array in arrays]
         yield arrays_batch
 
-def basicModel(features):
+def basicModel(features, nodes):
     length = len(features)
 
+    n_nodes = [length] + nodes + [1]
+    middle_layers = []
+    for i in range(len(n_nodes)-1):
+        middle_layers.append(nn.Linear(n_nodes[i], n_nodes[i+1]))
+        middle_layers.append(nn.ReLU())  
+
     model = nn.Sequential(
-        nn.Linear(length, 5),
-        nn.ReLU(),
-        nn.Linear(5, 1),
+        nn.BatchNorm1d(length),
+        *middle_layers,
+        nn.Flatten(0, 1),
         nn.Sigmoid()
         )
     return model
@@ -129,7 +135,7 @@ def getTrainTestSplit(combine_df):
 
     return x_train,x_test
 
-def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_models=False, batch_size = 1024):
+def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_models=False, batch_size = 1024,nodes = [5]):
     loss_f = lambda x, y, w: weightedBCELoss(x,y,w)
 
     X_train = train_df[features].to_numpy()
@@ -139,7 +145,8 @@ def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_
     w_train = train_df["weight_central"].to_numpy()
     w_test = test_df["weight_central"].to_numpy()
 
-    model = basicModel(features).to(device)
+    model = basicModel(features,nodes).to(device)
+    print(model)
     optimiser =  torch.optim.Adam(model.parameters(), lr= lr)
     epoch_loss_train = []
     epoch_loss_test = []
