@@ -39,7 +39,7 @@ feature_list = ['Diphoton_mass', 'Diphoton_pt_mgg', 'Diphoton_dPhi',
 signal_names = ["GluGluToRadionToHHTo2G2Tau_M-1000"]
 
 
-feature_list = ['MET_pt']
+feature_list = ['Diphoton_dPhi']
 
 
 for signal_name in signal_names:
