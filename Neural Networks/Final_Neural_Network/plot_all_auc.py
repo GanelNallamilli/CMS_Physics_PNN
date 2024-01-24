@@ -62,6 +62,8 @@ for columns in reorder_dict_df.columns:
         plt.grid()
     i+=1
 
+
+
 plt.show()
 
 
