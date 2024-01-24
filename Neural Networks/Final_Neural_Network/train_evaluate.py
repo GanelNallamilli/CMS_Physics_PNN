@@ -176,6 +176,11 @@ def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_
     epoch_loss_test = []
     models = []
 
+
+    patience = 30
+    best_loss = float('inf')
+    patience_counter = 0
+
     print(">> Training...")
     for i_epoch in tqdm(range(0,epoch)):
         print(f"Epoch {i_epoch}")
@@ -197,6 +202,17 @@ def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_
 
         epoch_loss_train.append(getTotalLoss(model, loss_f, X_train, y_train, w_train, batch_size))
         epoch_loss_test.append(getTotalLoss(model, loss_f, X_test, y_test, w_test, batch_size))
+
+        if epoch_loss_test[-1] < best_loss:
+            best_loss = epoch_loss_test[-1]
+            patience_counter = 0
+            # Save the model
+        else:
+            patience_counter += 1
+
+        if patience_counter >= patience:
+            print("Early stopping triggered")
+            break
 
     print(">> Training finished")
     model.eval()
