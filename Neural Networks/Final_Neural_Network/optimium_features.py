@@ -23,10 +23,10 @@ def separate_output_score(output_score,y):
 
 
 
-signal_masses = ["260","270","280","290","300","320","350","400","450","500","550","600","650","700","750","800","900"]
-#signal_masses = ["260"]
+#signal_masses = ["260","270","280","290","300","320","350","400","450","500","550","600","650","700","750","800","900"]
+signal_masses = ["260"]
 
-num_of_features = 12
+num_of_features = 19
 feature_list = []
 sorted_features = {}
 
@@ -58,8 +58,8 @@ for signal in signal_masses:
     dict = {}
     epoch = 200
 
-    nodes = [64,64,32]
-    models,epoch_loss_train,epoch_loss_test,output_score = te.trainNetwork(x_train, x_test, feature_list, 0.0001, epoch = epoch, outdir=None, save_models=False, batch_size = 2048, nodes = nodes)
+    nodes = [50,50,50]
+    models,epoch_loss_train,epoch_loss_test,output_score = te.trainNetwork(x_train, x_test, feature_list, 0.0001, epoch = epoch, outdir=None, save_models=False, batch_size = 2048, nodes = nodes, model_type='char')
 
     signal_output_score,background_output_score = separate_output_score(output_score,x_test['y'])
 
