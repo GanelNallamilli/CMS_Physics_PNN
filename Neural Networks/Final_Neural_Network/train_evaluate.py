@@ -47,7 +47,8 @@ def read_dataframes(directory = '', signal_name = ''):
                       'Diphoton_sublead_lepton_deta',
                       'Diphoton_sublead_lepton_dR',
                       'LeadPhoton_ditau_dR',
-                      'ditau_mass']
+                      'ditau_mass',
+                      'jet_1_pt']
 
     df = pd.read_parquet(f'{directory}merged_nominal.parquet')
     with open(f'{directory}summary.json', "r") as f:
