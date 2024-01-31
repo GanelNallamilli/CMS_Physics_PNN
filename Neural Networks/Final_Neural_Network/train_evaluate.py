@@ -34,7 +34,7 @@ def learning_rate_scheduler(epoch, lr_epoch, initial, epochlist, scheduler=None)
             f=epochlist[epoch]/epochlist[0]
             newlrr=initial*f
             newlr=float(newlrr.item())
-    if scheduler == 'Linear'
+    #if scheduler == 'Linear':
         
     return newlr       
         
@@ -111,7 +111,8 @@ def getWeightedBatches(arrays, batch_size=None):
     sampling_prob = adjusted_weights / adjusted_weights.sum()
 
 
-    for _ in tqdm(range(0, length, batch_size)):
+    #for _ in tqdm(range(0, length, batch_size)):
+    for _ in range(0, length, batch_size):
         chosen_indices = np.random.choice(indices, size=batch_size, p=sampling_prob)
         arrays_batch = [torch.Tensor(array[chosen_indices]).to(device) for array in arrays]
         yield arrays_batch
@@ -122,7 +123,8 @@ def getBatches(arrays, batch_size=None):
     
     length = len(arrays[0])
 
-    for i in tqdm(range(0, length, batch_size)):
+    #for i in tqdm(range(0, length, batch_size)):
+    for i in range(0, length, batch_size):
         arrays_batch = [torch.Tensor(array[i:i+batch_size]).to(device) for array in arrays]
         yield arrays_batch
 
@@ -217,7 +219,7 @@ def getTrainTestSplit(combine_df,add_to_test_df = []):
 
     return x_train,x_test
 
-def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_models=False, batch_size = 1024,nodes = [5],model_type = 'basic'):
+def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_models=False, batch_size = 1024,nodes = [5],model_type = 'basic',scheduler_type='None'):
     loss_f = lambda x, y, w: weightedBCELoss(x,y,w)
 
     scaler = StandardScaler()
@@ -242,14 +244,15 @@ def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_
     epoch_loss_test = []
     models = []
 
-
     patience = 30
     best_loss = float('inf')
     patience_counter = 0
-
+    learning_rate_epochs=[]
     print(">> Training...")
-    for i_epoch in tqdm(range(0,epoch)):
-        print(f"Epoch {i_epoch}")
+#    for i_epoch in tqdm(range(0,epoch)):
+    for i_epoch in range(0,epoch):
+
+       # print(f"Epoch {i_epoch}")
         total_loss = 0.0
         model.train()
 
@@ -272,7 +275,7 @@ def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_
         
         for param_group in optimiser.param_groups:
             lr_epoch= param_group['lr']
-            updated_lr = learning_rate_scheduler(epoch=i_epoch, lr_epoch=lr_epoch, initial=lr, epochlist=epoch_loss_train, scheduler='Custom')
+            updated_lr = learning_rate_scheduler(epoch=i_epoch, lr_epoch=lr_epoch, initial=lr, epochlist=epoch_loss_train, scheduler=scheduler_type)
             param_group['lr'] = updated_lr
         learning_rate_epochs.append(updated_lr)
         
@@ -287,15 +290,15 @@ def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_
             print("Early stopping triggered")
             break
 
-    print(">> Training finished")
+    #print(">> Training finished")
     model.eval()
     with torch.no_grad():
         output_score = model(torch.Tensor(X_test).to(device))
         output_score_train = model(torch.Tensor(X_train).to(device))
 
-    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train
+    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs
 
-def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=None, save_models=False, batch_size = 1024,nodes = [5],model_type = 'basic'):
+def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=None, save_models=False, batch_size = 1024,nodes = [5],model_type = 'basic',scheduler_type='None'):
     loss_f = lambda x, y: BCELoss(x,y)
 
     scaler = StandardScaler()
@@ -314,7 +317,7 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
     elif model_type == 'basic':
         model = basicModel(features,nodes).to(device)
     
-    print(model)
+   # print(model)
     optimiser =  torch.optim.Adam(model.parameters(), lr= lr)
     epoch_loss_train = []
     epoch_loss_test = []
@@ -324,13 +327,15 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
     patience = 15
     best_loss = float('inf')
     patience_counter = 0
-
-    print(">> Training...")
-    for i_epoch in tqdm(range(0,epoch)):
-        print(f"Epoch {i_epoch}")
+    learning_rate_epochs=[]
+    #print(">> Training...")
+   # for i_epoch in tqdm(range(0,epoch)):
+    for i_epoch in range(0,epoch):
+       # print(f"Epoch {i_epoch}")
         total_loss = 0.0
         model.train()
-
+        if i_epoch%250 == 0:
+            print(f'Epoch: {i_epoch}' )
         batch_gen = getWeightedBatches([X_train, y_train, w_train], batch_size = batch_size)
 
         for X_tensor, y_tensor, w_tensor in batch_gen:
@@ -346,24 +351,31 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
 
         epoch_loss_train.append(getTotalLoss_no_weight(model, loss_f, X_train, y_train, w_train, batch_size))
         epoch_loss_test.append(getTotalLoss_no_weight(model, loss_f, X_test, y_test, w_test, batch_size))
+ 
+        for param_group in optimiser.param_groups:
+            lr_epoch= param_group['lr']
+            updated_lr = learning_rate_scheduler(epoch=i_epoch, lr_epoch=lr_epoch, initial=lr, epochlist=epoch_loss_train, scheduler=scheduler_type)
+            param_group['lr'] = updated_lr
+        learning_rate_epochs.append(updated_lr)
+        
+        
+       # if epoch_loss_test[-1] < best_loss:
+        #    best_loss = epoch_loss_test[-1]
+         #   patience_counter = 0
+        #else:
+ #           patience_counter += 1
+#
+  #      if patience_counter >= patience:
+   #         print("Early stopping triggered")
+    #        break
 
-        if epoch_loss_test[-1] < best_loss:
-            best_loss = epoch_loss_test[-1]
-            patience_counter = 0
-        else:
-            patience_counter += 1
-
-        if patience_counter >= patience:
-            print("Early stopping triggered")
-            break
-
-    print(">> Training finished")
+    #print(">> Training finished")
     model.eval()
     with torch.no_grad():
         output_score = model(torch.Tensor(X_test).to(device))
         output_score_train = model(torch.Tensor(X_train).to(device))
 
-    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train
+    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs
 
 
     
