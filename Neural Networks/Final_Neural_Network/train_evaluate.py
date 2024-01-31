@@ -20,6 +20,17 @@ def weightedBCELoss(input, target, weight):
   return torch.mean(-w * (y*log(x) + (1-y)*log(1-x)))
 
 
+def learning_rate_scheduler(epoch, lr_epoch, initial, epochlist, scheduler=None):
+    newlr=lr_epoch
+    if scheduler == 'Custom':
+        if epoch%10 == 0 and epoch > 0:
+            f=epochlist[epoch]/epochlist[0]
+            newlrr=initial*f
+            newlr=float(newlrr.item())
+    if scheduler == 'Linear'
+        
+    return newlr       
+        
 def read_dataframes(directory = '', signal_name = ''):
     #list of each bkgs for concatenation
     background_list=['DiPhoton', 
@@ -204,6 +215,14 @@ def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_
         epoch_loss_train.append(getTotalLoss(model, loss_f, X_train, y_train, w_train, batch_size))
         epoch_loss_test.append(getTotalLoss(model, loss_f, X_test, y_test, w_test, batch_size))
 
+        
+        for param_group in optimiser.param_groups:
+            lr_epoch= param_group['lr']
+            updated_lr = learning_rate_scheduler(epoch=i_epoch, lr_epoch=lr_epoch, initial=lr, epochlist=epoch_loss_train, scheduler='Custom')
+            param_group['lr'] = updated_lr
+        learning_rate_epochs.append(updated_lr)
+        
+        
         if epoch_loss_test[-1] < best_loss:
             best_loss = epoch_loss_test[-1]
             patience_counter = 0
