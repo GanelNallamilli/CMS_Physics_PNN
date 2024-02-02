@@ -36,7 +36,13 @@ def learning_rate_scheduler(epoch, lr_epoch, initial, epochlist, scheduler=None)
             newlr=float(newlrr.item())
     #if scheduler == 'Linear':
         
-    return newlr       
+    return newlr      
+
+def replace_9(distribution):
+    distribution.replace(-9, pd.NA, inplace=True)
+    column_means = distribution.mean()
+    distribution.fillna(column_means, inplace=True)
+    return distribution
         
 def read_dataframes(directory = '', signal_name = ''):
     #list of each bkgs for concatenation
@@ -72,15 +78,17 @@ def read_dataframes(directory = '', signal_name = ''):
 
     signal = df[df.process_id == proc_dict[f"{signal_name}"]]
 
+    signal = replace_9(signal.copy())
+
     listforconc=[]
     for i in background_list:                              
         bkgg = df[df.process_id == proc_dict[i]]
         listforconc.append(bkgg)
 
+    for i in range(len(listforconc)):
+        listforconc[i] = replace_9(listforconc[i].copy())
+
     background = pd.concat(listforconc)
-    for columns in MinusNineBinning:
-            background = background.loc[(background[columns] > -8)]
-            signal = signal.loc[(signal[columns] > -8)]
 
 
     signal['y']=np.ones(len(signal.index))
@@ -322,12 +330,14 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
     epoch_loss_train = []
     epoch_loss_test = []
     models = []
+    best_model = ""
 
 
-    patience = 15
+    patience = 3
     best_loss = float('inf')
     patience_counter = 0
     learning_rate_epochs=[]
+    best_epoch = 0
     #print(">> Training...")
    # for i_epoch in tqdm(range(0,epoch)):
     for i_epoch in range(0,epoch):
@@ -359,21 +369,24 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
         learning_rate_epochs.append(updated_lr)
         
         
-       # if epoch_loss_test[-1] < best_loss:
-        #    best_loss = epoch_loss_test[-1]
-         #   patience_counter = 0
-        #else:
- #           patience_counter += 1
-#
-  #      if patience_counter >= patience:
-   #         print("Early stopping triggered")
-    #        break
+        if epoch_loss_test[-1] < best_loss:
+           best_loss = epoch_loss_test[-1]
+           best_model = model
+           best_epoch = i_epoch
+           patience_counter = 0
+        else:
+           patience_counter += 1
 
-    #print(">> Training finished")
-    model.eval()
+        if patience_counter >= patience:
+            print("Early stopping triggered")
+            break
+
+    print(">> Training finished")
+    print(f"Best model at epoch {best_epoch} with loss of {best_loss}")
+    best_model.eval()
     with torch.no_grad():
-        output_score = model(torch.Tensor(X_test).to(device))
-        output_score_train = model(torch.Tensor(X_train).to(device))
+        output_score = best_model(torch.Tensor(X_test).to(device))
+        output_score_train = best_model(torch.Tensor(X_train).to(device))
 
     return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs
 
