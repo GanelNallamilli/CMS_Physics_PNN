@@ -344,7 +344,7 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
        # print(f"Epoch {i_epoch}")
         total_loss = 0.0
         model.train()
-        if i_epoch%250 == 0:
+        if i_epoch%5 == 0:
             print(f'Epoch: {i_epoch}' )
         batch_gen = getWeightedBatches([X_train, y_train, w_train], batch_size = batch_size)
 
@@ -367,7 +367,6 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
             updated_lr = learning_rate_scheduler(epoch=i_epoch, lr_epoch=lr_epoch, initial=lr, epochlist=epoch_loss_train, scheduler=scheduler_type)
             param_group['lr'] = updated_lr
         learning_rate_epochs.append(updated_lr)
-        
         
         if epoch_loss_test[-1] < best_loss:
            best_loss = epoch_loss_test[-1]

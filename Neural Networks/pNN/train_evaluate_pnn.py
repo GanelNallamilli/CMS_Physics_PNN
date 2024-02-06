@@ -1,14 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb  2 16:53:03 2024
-
-@author: drpla
-"""
-
-"""
-So not to overwrite the previous faulty version
-"""
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -23,9 +12,9 @@ from tqdm import tqdm
 import copy
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
+import random
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
 
 def weightedBCELoss(input, target, weight):
   x, y, w = input, target, weight
@@ -41,13 +30,13 @@ def BCELoss(input, target):
 def learning_rate_scheduler(epoch, lr_epoch, initial, epochlist, scheduler=None):
     newlr=lr_epoch
     if scheduler == 'Custom':
-        if epoch%5 == 0 and epoch > 0:
+        if epoch%10 == 0 and epoch > 0:
             f=epochlist[epoch]/epochlist[0]
             newlrr=initial*f
             newlr=float(newlrr.item())
     #if scheduler == 'Linear':
         
-    return newlr      
+    return newlr  
 
 def replace_9(distribution):
     distribution.replace(-9, pd.NA, inplace=True)
@@ -87,9 +76,16 @@ def read_dataframes(directory = '', signal_name = ''):
     with open(f'{directory}summary.json', "r") as f:
         proc_dict = json.load(f)["sample_id_map"]
 
-    signal = df[df.process_id == proc_dict[f"{signal_name}"]]
+    allmasses=['260','270','280','290','300','320','350','400','450','500','550','600','650','700','750','800','900','1000']
+    listforconc=[]
+    for mass in allmasses:                              
+        sig = df[df.process_id == proc_dict["GluGluToRadionToHHTo2G2Tau_M-"+mass]]
+        listforconc.append(sig)
 
-    signal = replace_9(signal.copy())
+    for i in range(len(listforconc)):
+        listforconc[i] = replace_9(listforconc[i].copy())
+
+    signal = pd.concat(listforconc)
 
     listforconc=[]
     for i in background_list:                              
@@ -105,7 +101,6 @@ def read_dataframes(directory = '', signal_name = ''):
     signal['y']=np.ones(len(signal.index))
     background['y']=np.zeros(len(background.index))
 
-    combine = pd.concat([signal,background])
 
     listforconc=[]
     add_to_test = ['GJets','TTJets']
@@ -119,8 +114,25 @@ def read_dataframes(directory = '', signal_name = ''):
     add_to_test_df = pd.concat(listforconc)
     add_to_test_df['y']=np.zeros(len(add_to_test_df.index))
 
-    return signal,background,combine,add_to_test_df
+    signal_proportionals = {}
+    for mass in allmasses:
+        signal_proportionals[mass] = len(signal[signal.MX == int(mass)])/len(signal.MX)
 
+    total_background_length = len(background) + len(add_to_test_df)
+    mass_values_array = []
+
+    for mass in allmasses:
+        temp_mass = [int(mass)]*(int(signal_proportionals[mass]*total_background_length)+1)
+        for i in range(len(temp_mass)):
+            mass_values_array.append(temp_mass[i])
+
+    random.shuffle(mass_values_array)
+
+    background['MX'] = mass_values_array[:len(background)]
+    add_to_test_df['MX'] = mass_values_array[len(background):len(background)+len(add_to_test_df)]
+
+    combine = pd.concat([signal,background])
+    return signal,background,combine,add_to_test_df
 
 def getWeightedBatches(arrays, batch_size=None):
     weights = arrays[2]
@@ -132,41 +144,11 @@ def getWeightedBatches(arrays, batch_size=None):
     adjusted_weights = weights + offset
     sampling_prob = adjusted_weights / adjusted_weights.sum()
 
-
-    #for _ in tqdm(range(0, length, batch_size)):
-    for _ in range(0, length, batch_size):
+    for _ in tqdm(range(0, length, batch_size)):
         chosen_indices = np.random.choice(indices, size=batch_size, p=sampling_prob)
         arrays_batch = [torch.Tensor(array[chosen_indices]).to(device) for array in arrays]
         yield arrays_batch
 
-def getBatches(arrays, batch_size=None):
-    if len(arrays) != 3:
-        raise Exception("'getBatchs' arrays should contain 3 variables: x,y,w (data, labels, weights)")
-    
-    length = len(arrays[0])
-
-    #for i in tqdm(range(0, length, batch_size)):
-    for i in range(0, length, batch_size):
-        arrays_batch = [torch.Tensor(array[i:i+batch_size]).to(device) for array in arrays]
-        yield arrays_batch
-
-def basicModel(features, nodes):
-    length = len(features)
-
-    n_nodes = [length] + nodes + [1]
-    layers = []
-    for i in range(len(n_nodes)-1):
-        if i == len(n_nodes)-2:
-            layers.append(nn.Linear(n_nodes[i], n_nodes[i+1]))
-            layers.append(nn.Sigmoid()) 
-        else:
-            layers.append(nn.Linear(n_nodes[i], n_nodes[i+1]))
-            layers.append(nn.ReLU())  
-
-    model = nn.Sequential(
-        *layers
-        )
-    return model
 
 def charModel(features, nodes):
     length = len(features)
@@ -187,6 +169,24 @@ def charModel(features, nodes):
         )
     return model
 
+def basicModel(features, nodes):
+    length = len(features)
+
+    n_nodes = [length] + nodes + [1]
+    layers = []
+    for i in range(len(n_nodes)-1):
+        if i == len(n_nodes)-2:
+            layers.append(nn.Linear(n_nodes[i], n_nodes[i+1]))
+            layers.append(nn.Sigmoid()) 
+        else:
+            layers.append(nn.Linear(n_nodes[i], n_nodes[i+1]))
+            layers.append(nn.ReLU())  
+
+    model = nn.Sequential(
+        *layers
+        )
+    return model
+
 def getTotalLoss_no_weight(model, loss_f, X, y, w, batch_size):
   total_loss = 0.0
 
@@ -201,19 +201,6 @@ def getTotalLoss_no_weight(model, loss_f, X, y, w, batch_size):
 
   return mean_loss
 
-def getTotalLoss(model, loss_f, X, y, w, batch_size):
-  total_loss = 0.0
-
-  with torch.no_grad():
-    for X_tensor, y_tensor, w_tensor in getBatches([X, y, w], batch_size):
-      output = model(X_tensor)
-      total_loss += loss_f(output, y_tensor.reshape(-1, 1), w_tensor.reshape(-1, 1)).detach().cpu()
-
-
-
-    mean_loss = total_loss / len(X)
-
-  return mean_loss
 
 def getTrainTestSplit(combine_df,add_to_test_df = []):
     x_train, x_test, y_train, y_test = train_test_split(combine_df.drop(columns=['y']), combine_df['y'], test_size=(1/3), random_state=42)
@@ -241,84 +228,6 @@ def getTrainTestSplit(combine_df,add_to_test_df = []):
 
     return x_train,x_test
 
-def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_models=False, batch_size = 1024,nodes = [5],model_type = 'basic',scheduler_type='None'):
-    loss_f = lambda x, y, w: weightedBCELoss(x,y,w)
-
-    scaler = StandardScaler()
-    train_df[features] = scaler.fit_transform(train_df[features])
-    test_df[features] = scaler.transform(test_df[features])
-
-    X_train = train_df[features].to_numpy()
-    X_test = test_df[features].to_numpy()
-    y_train = train_df["y"].to_numpy()
-    y_test = test_df["y"].to_numpy()
-    w_train = train_df["weight_central"].to_numpy()
-    w_test = test_df["weight_central"].to_numpy()
-
-    if model_type == 'char':
-        model = charModel(features,nodes).to(device)
-    elif model_type == 'basic':
-        model = basicModel(features,nodes).to(device)
-    
-    print(model)
-    optimiser =  torch.optim.Adam(model.parameters(), lr= lr)
-    epoch_loss_train = []
-    epoch_loss_test = []
-    models = []
-
-    patience = 30
-    best_loss = float('inf')
-    patience_counter = 0
-    learning_rate_epochs=[]
-    print(">> Training...")
-#    for i_epoch in tqdm(range(0,epoch)):
-    for i_epoch in range(0,epoch):
-
-       # print(f"Epoch {i_epoch}")
-        total_loss = 0.0
-        model.train()
-
-        batch_gen = getBatches([X_train, y_train, w_train], batch_size = batch_size)
-
-        for X_tensor, y_tensor, w_tensor in batch_gen:
-            optimiser.zero_grad()
-            output = model(X_tensor)
-            loss = loss_f(output, y_tensor.reshape(-1, 1), w_tensor.reshape(-1, 1))
-            total_loss += loss.detach().cpu()
-            loss.backward()
-            optimiser.step()
-
-        model.eval()
-        models.append(copy.deepcopy(model))
-
-        epoch_loss_train.append(getTotalLoss(model, loss_f, X_train, y_train, w_train, batch_size))
-        epoch_loss_test.append(getTotalLoss(model, loss_f, X_test, y_test, w_test, batch_size))
-
-        
-        for param_group in optimiser.param_groups:
-            lr_epoch= param_group['lr']
-            updated_lr = learning_rate_scheduler(epoch=i_epoch, lr_epoch=lr_epoch, initial=lr, epochlist=epoch_loss_train, scheduler=scheduler_type)
-            param_group['lr'] = updated_lr
-        learning_rate_epochs.append(updated_lr)
-        
-        
-        if epoch_loss_test[-1] < best_loss:
-            best_loss = epoch_loss_test[-1]
-            patience_counter = 0
-        else:
-            patience_counter += 1
-
-        if patience_counter >= patience:
-            print("Early stopping triggered")
-            break
-
-    #print(">> Training finished")
-    model.eval()
-    with torch.no_grad():
-        output_score = model(torch.Tensor(X_test).to(device))
-        output_score_train = model(torch.Tensor(X_train).to(device))
-
-    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs
 
 def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=None, save_models=False, batch_size = 1024,nodes = [5],model_type = 'basic',scheduler_type='None'):
     loss_f = lambda x, y: BCELoss(x,y)
@@ -326,6 +235,12 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
     scaler = StandardScaler()
     train_df[features] = scaler.fit_transform(train_df[features])
     test_df[features] = scaler.transform(test_df[features])
+
+    print('train')
+    print(train_df['MX'])
+    print(train_df.isna().sum().sum())
+    print('test')
+    print(test_df.isna().sum().sum())
 
     X_train = train_df[features].to_numpy()
     X_test = test_df[features].to_numpy()
@@ -353,13 +268,12 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
     learning_rate_epochs=[]
     best_epoch = 0
     #print(">> Training...")
-   # for i_epoch in tqdm(range(0,epoch)):
-    for i_epoch in range(0,epoch):
-       # print(f"Epoch {i_epoch}")
+    for i_epoch in tqdm(range(0,epoch)):
+        print(f"Epoch {i_epoch}")
         total_loss = 0.0
         model.train()
-        if i_epoch%5 == 0:
-            print(f'Epoch: {i_epoch}' )
+        # if i_epoch%250 == 0:
+        #     print(f'Epoch: {i_epoch}' )
         batch_gen = getWeightedBatches([X_train, y_train, w_train], batch_size = batch_size)
 
         for X_tensor, y_tensor, w_tensor in batch_gen:
@@ -395,6 +309,11 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
             print("Early stopping triggered")
             break
 
+        if best_model == "":
+            best_model = model
+
+
+
     print(">> Training finished")
     print(f"Best model at epoch {best_epoch} with loss of {best_loss}")
     best_model.eval()
@@ -403,12 +322,6 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
         output_score_train = best_model(torch.Tensor(X_train).to(device))
 
     return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs
-
-
-    
-    
-    
-    
 
 
 
