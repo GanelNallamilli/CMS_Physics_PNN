@@ -82,18 +82,12 @@ def read_dataframes(directory = '', signal_name = ''):
         sig = df[df.process_id == proc_dict["GluGluToRadionToHHTo2G2Tau_M-"+mass]]
         listforconc.append(sig)
 
-    for i in range(len(listforconc)):
-        listforconc[i] = replace_9(listforconc[i].copy())
-
     signal = pd.concat(listforconc)
 
     listforconc=[]
     for i in background_list:                              
         bkgg = df[df.process_id == proc_dict[i]]
         listforconc.append(bkgg)
-
-    for i in range(len(listforconc)):
-        listforconc[i] = replace_9(listforconc[i].copy())
 
     background = pd.concat(listforconc)
 
@@ -107,9 +101,6 @@ def read_dataframes(directory = '', signal_name = ''):
     for i in add_to_test:                              
         bkgg = df[df.process_id == proc_dict[i]]
         listforconc.append(bkgg)
-
-    for i in range(len(listforconc)):
-        listforconc[i] = replace_9(listforconc[i].copy())
 
     add_to_test_df = pd.concat(listforconc)
     add_to_test_df['y']=np.zeros(len(add_to_test_df.index))
@@ -132,6 +123,15 @@ def read_dataframes(directory = '', signal_name = ''):
     add_to_test_df['MX'] = mass_values_array[len(background):len(background)+len(add_to_test_df)]
 
     combine = pd.concat([signal,background])
+
+    temp_data_frame = pd.concat([combine,add_to_test_df])
+    for col in MinusNineBinning:
+        temp_data_frame[col].replace(-9, pd.NA, inplace=True)
+        column_means = temp_data_frame[col].mean()
+
+        combine[col].fillna(column_means, inplace=True)
+        add_to_test_df[col].fillna(column_means, inplace=True)
+        
     return signal,background,combine,add_to_test_df
 
 def getWeightedBatches(arrays, batch_size=None):
