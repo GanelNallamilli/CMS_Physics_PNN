@@ -78,15 +78,10 @@ def read_dataframes(directory = '', signal_name = ''):
 
     signal = df[df.process_id == proc_dict[f"{signal_name}"]]
 
-    signal = replace_9(signal.copy())
-
     listforconc=[]
     for i in background_list:                              
         bkgg = df[df.process_id == proc_dict[i]]
         listforconc.append(bkgg)
-
-    for i in range(len(listforconc)):
-        listforconc[i] = replace_9(listforconc[i].copy())
 
     background = pd.concat(listforconc)
 
@@ -103,7 +98,18 @@ def read_dataframes(directory = '', signal_name = ''):
         listforconc.append(bkgg)
 
     add_to_test_df = pd.concat(listforconc)
+
     add_to_test_df['y']=np.zeros(len(add_to_test_df.index))
+
+    temp_data_frame = pd.concat([combine,add_to_test_df])
+    # for col in MinusNineBinning:
+    #     temp_data_frame[col].replace(-9, pd.NA, inplace=True)
+    #     column_means = temp_data_frame[col].mean()
+
+    #     combine[col].fillna(column_means, inplace=True)
+    #     add_to_test_df[col].fillna(column_means, inplace=True)
+
+
 
     return signal,background,combine,add_to_test_df
 
