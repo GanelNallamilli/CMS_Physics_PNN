@@ -118,9 +118,12 @@ def read_dataframes(directory = '', signal_name = ''):
         temp_data_frame[col].replace(-9, pd.NA, inplace=True)
         column_means = temp_data_frame[col].mean()
 
+        combine[col].replace(-9, pd.NA, inplace=True)
+        add_to_test_df[col].replace(-9, pd.NA, inplace=True)
+
         combine[col].fillna(column_means, inplace=True)
         add_to_test_df[col].fillna(column_means, inplace=True)
-
+        
     return signal,background,combine,add_to_test_df
 
 

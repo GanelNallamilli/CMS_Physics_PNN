@@ -76,11 +76,13 @@ def read_dataframes(directory = '', signal_name = ''):
     with open(f'{directory}summary.json', "r") as f:
         proc_dict = json.load(f)["sample_id_map"]
 
+
     allmasses=['260','270','280','290','300','320','350','400','450','500','550','600','650','700','750','800','900','1000']
+    sig_pnn_test_conc = []
     listforconc=[]
     for mass in allmasses:                              
-        sig = df[df.process_id == proc_dict["GluGluToRadionToHHTo2G2Tau_M-"+mass]]
-        listforconc.append(sig)
+        full_sig = df[df.process_id == proc_dict["GluGluToRadionToHHTo2G2Tau_M-"+mass]]
+        listforconc.append(full_sig)
 
     signal = pd.concat(listforconc)
 
@@ -109,7 +111,8 @@ def read_dataframes(directory = '', signal_name = ''):
     for mass in allmasses:
         signal_proportionals[mass] = len(signal[signal.MX == int(mass)])/len(signal.MX)
 
-    total_background_length = len(background) + len(add_to_test_df)
+
+    total_background_length = len(background) + len(add_to_test_df) 
     mass_values_array = []
 
     for mass in allmasses:
@@ -121,6 +124,7 @@ def read_dataframes(directory = '', signal_name = ''):
 
     background['MX'] = mass_values_array[:len(background)]
     add_to_test_df['MX'] = mass_values_array[len(background):len(background)+len(add_to_test_df)]
+
 
     combine = pd.concat([signal,background])
 
@@ -322,6 +326,7 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
         output_score_train = best_model(torch.Tensor(X_train).to(device))
 
     return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs
+
 
 
 
