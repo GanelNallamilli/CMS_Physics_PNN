@@ -89,15 +89,11 @@ def read_dataframes(directory = '', signal_name = ''):
 
     signal = df[df.process_id == proc_dict[f"{signal_name}"]]
 
-    signal = replace_9(signal.copy())
-
     listforconc=[]
     for i in background_list:                              
         bkgg = df[df.process_id == proc_dict[i]]
         listforconc.append(bkgg)
 
-    for i in range(len(listforconc)):
-        listforconc[i] = replace_9(listforconc[i].copy())
 
     background = pd.concat(listforconc)
 
@@ -113,9 +109,21 @@ def read_dataframes(directory = '', signal_name = ''):
         bkgg = df[df.process_id == proc_dict[i]]
         listforconc.append(bkgg)
 
+
     add_to_test_df = pd.concat(listforconc)
     add_to_test_df['y']=np.zeros(len(add_to_test_df.index))
 
+    temp_data_frame = pd.concat([combine,add_to_test_df])
+    for col in MinusNineBinning:
+        temp_data_frame[col].replace(-9, pd.NA, inplace=True)
+        column_means = temp_data_frame[col].mean()
+
+        combine[col].replace(-9, pd.NA, inplace=True)
+        add_to_test_df[col].replace(-9, pd.NA, inplace=True)
+
+        combine[col].fillna(column_means, inplace=True)
+        add_to_test_df[col].fillna(column_means, inplace=True)
+        
     return signal,background,combine,add_to_test_df
 
 
@@ -263,6 +271,8 @@ def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_
     epoch_loss_test = []
     models = []
 
+    best_model = ''
+
     patience = 30
     best_loss = float('inf')
     patience_counter = 0
@@ -301,6 +311,7 @@ def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_
         
         if epoch_loss_test[-1] < best_loss:
             best_loss = epoch_loss_test[-1]
+            best_model = model
             patience_counter = 0
         else:
             patience_counter += 1
@@ -308,6 +319,9 @@ def trainNetwork(train_df, test_df, features, lr,epoch = 200, outdir=None, save_
         if patience_counter >= patience:
             print("Early stopping triggered")
             break
+
+        if best_model == '':
+            best_model = model
 
     #print(">> Training finished")
     model.eval()
@@ -344,7 +358,7 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
     best_model = ""
 
 
-    patience = 3
+    patience = 10
     best_loss = float('inf')
     patience_counter = 0
     learning_rate_epochs=[]
@@ -355,7 +369,7 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
        # print(f"Epoch {i_epoch}")
         total_loss = 0.0
         model.train()
-        if i_epoch%25 == 0:
+        if i_epoch%20 == 0:
             print(f'Epoch: {i_epoch}' )
         batch_gen = getWeightedBatches([X_train, y_train, w_train], batch_size = batch_size)
 

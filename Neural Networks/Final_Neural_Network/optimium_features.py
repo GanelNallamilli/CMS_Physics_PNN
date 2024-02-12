@@ -69,7 +69,7 @@ for i in range(17,19,2):
     auc_for_optimium_features_test = {}
     auc_for_optimium_features_train = {}
 
-    #signal_masses = ["320"]
+    signal_masses = ["320"]
 
     for signal in signal_masses:
         print(signal)
@@ -78,10 +78,10 @@ for i in range(17,19,2):
         x_train,x_test = te.getTrainTestSplit(combine_df,add_to_test_df)
         dict = {}
         epoch = 500
-        lr =0.00001
+        lr =0.0001
 
         nodes = [50,50,50]
-        models,epoch_loss_train,epoch_loss_test,output_score,output_score_train = te.trainNetwork_no_weights(x_train, x_test, feature_list, lr, epoch = epoch, outdir=None, save_models=False, batch_size = 1024, nodes = nodes, model_type='char')
+        models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs = te.trainNetwork_no_weights(x_train, x_test, feature_list, lr, epoch = epoch, outdir=None, save_models=False, batch_size = 1024, nodes = nodes, model_type='char')
 
         signal_output_score,background_output_score = separate_output_score(output_score,x_test['y'])
 
