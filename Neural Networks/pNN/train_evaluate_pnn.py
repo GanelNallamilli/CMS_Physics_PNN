@@ -133,6 +133,9 @@ def read_dataframes(directory = '', signal_name = ''):
         temp_data_frame[col].replace(-9, pd.NA, inplace=True)
         column_means = temp_data_frame[col].mean()
 
+        combine[col].replace(-9, pd.NA, inplace=True)
+        add_to_test_df[col].replace(-9, pd.NA, inplace=True)
+
         combine[col].fillna(column_means, inplace=True)
         add_to_test_df[col].fillna(column_means, inplace=True)
         
@@ -209,10 +212,19 @@ def getTotalLoss_no_weight(model, loss_f, X, y, w, batch_size):
 def getTrainTestSplit(combine_df,add_to_test_df = []):
     x_train, x_test, y_train, y_test = train_test_split(combine_df.drop(columns=['y']), combine_df['y'], test_size=(1/3), random_state=42)
 
-    x_train['weight_central'][y_train==0] *= (x_train['weight_central'][y_train==1].sum() / x_train['weight_central'][y_train==0].sum())
+    allmasses=['260','270','280','290','300','320','350','400','450','500','550','600','650','700','750','800','900','1000']
+
+    for mass in allmasses:
+        x_train['weight_central'][(y_train==1) & (x_train['MX'] == mass)] *= (x_train['weight_central'][(y_train==1) & (x_train['MX'] == 260)].sum() / x_train['weight_central'][(y_train==1) & (x_train['MX'] == mass)].sum())
+
+    for mass in allmasses:
+        x_test['weight_central'][(y_train==1) & (x_test['MX'] == mass)] *= (x_test['weight_central'][(y_train==1) & (x_test['MX'] == 260)].sum() / x_test['weight_central'][(y_train==1) & (x_test['MX'] == mass)].sum())
+        
+
+    x_train['weight_central'][y_train==1] *= (x_train['weight_central'][y_train==0].sum() / x_train['weight_central'][y_train==1].sum())
     x_train['weight_central'] *= (len(x_train['weight_central']) / x_train['weight_central'].sum())
 
-    x_test['weight_central'][y_test==0] *= (x_test['weight_central'][y_test==1].sum() / x_test['weight_central'][y_test==0].sum())
+    x_test['weight_central'][y_test==1] *= (x_test['weight_central'][y_test==0].sum() / x_test['weight_central'][y_test==1].sum())
     x_test['weight_central'] *= (len(x_test['weight_central']) / x_test['weight_central'].sum())
 
 
@@ -240,8 +252,8 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
     train_df[features] = scaler.fit_transform(train_df[features])
     test_df[features] = scaler.transform(test_df[features])
 
-    print('train')
-    print(train_df['MX'])
+    print('test_df')
+    print(test_df)
     print(train_df.isna().sum().sum())
     print('test')
     print(test_df.isna().sum().sum())
@@ -325,7 +337,7 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
         output_score = best_model(torch.Tensor(X_test).to(device))
         output_score_train = best_model(torch.Tensor(X_train).to(device))
 
-    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs
+    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs,scaler
 
 
 
