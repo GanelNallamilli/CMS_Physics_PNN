@@ -369,7 +369,7 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
        # print(f"Epoch {i_epoch}")
         total_loss = 0.0
         model.train()
-        if i_epoch%5 == 0:
+        if i_epoch%20 == 0:
             print(f'Epoch: {i_epoch}' )
         batch_gen = getWeightedBatches([X_train, y_train, w_train], batch_size = batch_size)
 
