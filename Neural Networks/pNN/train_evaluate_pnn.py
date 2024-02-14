@@ -44,7 +44,7 @@ def replace_9(distribution):
     distribution.fillna(column_means, inplace=True)
     return distribution
         
-def read_dataframes(directory = '', signal_name = ''):
+def read_dataframes(directory = '', signal_name = '',remove_masses = []):
     #list of each bkgs for concatenation
     background_list=['DiPhoton', 
                      'TTGG', 
@@ -78,6 +78,10 @@ def read_dataframes(directory = '', signal_name = ''):
 
 
     allmasses=['260','270','280','290','300','320','350','400','450','500','550','600','650','700','750','800','900','1000']
+
+    for mass in remove_masses:
+        allmasses.remove(str(mass))
+        
     sig_pnn_test_conc = []
     listforconc=[]
     for mass in allmasses:                              
@@ -209,16 +213,39 @@ def getTotalLoss_no_weight(model, loss_f, X, y, w, batch_size):
   return mean_loss
 
 
-def getTrainTestSplit(combine_df,add_to_test_df = []):
+def getTrainTestSplit(combine_df,add_to_test_df = [],remove_masses = []):
     x_train, x_test, y_train, y_test = train_test_split(combine_df.drop(columns=['y']), combine_df['y'], test_size=(1/3), random_state=42)
 
     allmasses=['260','270','280','290','300','320','350','400','450','500','550','600','650','700','750','800','900','1000']
 
-    for mass in allmasses:
+    for mass in remove_masses:
+        allmasses.remove(str(mass))
+        
+    start = 15  # Start value
+    end = 1    # End value
+    num_elements = 18  # Number of elements in the list
+    
+    # Calculating step size
+    step = (end - start) / (num_elements - 1)
+    
+    # Generating the list
+    list_from_3_to_1 = [start + step * i for i in range(num_elements)]
+    
+    x_train['weight_central'][(y_train==1) & (x_train['MX'] == 260)] *= (x_train['weight_central'][y_train==0].sum() / x_train['weight_central'][(y_train==1) & (x_train['MX'] == 260)].sum())
+
+    x_test['weight_central'][(y_test==1) & (x_test['MX'] == 260)] *= (x_test['weight_central'][y_test==0].sum() / x_test['weight_central'][(y_test==1) & (x_test['MX'] == 260)].sum())
+
+    for idx,mass in enumerate(allmasses):
         x_train['weight_central'][(y_train==1) & (x_train['MX'] == mass)] *= (x_train['weight_central'][(y_train==1) & (x_train['MX'] == 260)].sum() / x_train['weight_central'][(y_train==1) & (x_train['MX'] == mass)].sum())
 
-    for mass in allmasses:
-        x_test['weight_central'][(y_train==1) & (x_test['MX'] == mass)] *= (x_test['weight_central'][(y_train==1) & (x_test['MX'] == 260)].sum() / x_test['weight_central'][(y_train==1) & (x_test['MX'] == mass)].sum())
+    for idx,mass in enumerate(allmasses):
+        x_test['weight_central'][(y_test==1) & (x_test['MX'] == mass)] *= (x_test['weight_central'][(y_test==1) & (x_test['MX'] == 260)].sum() / x_test['weight_central'][(y_test==1) & (x_test['MX'] == mass)].sum())
+
+    for idx,mass in enumerate(allmasses):
+        x_train['weight_central'][(y_train==1) & (x_train['MX'] == mass)] *= list_from_3_to_1[idx]
+
+    for idx,mass in enumerate(allmasses):
+        x_test['weight_central'][(y_test==1) & (x_test['MX'] == mass)]  *= list_from_3_to_1[idx]
         
 
     x_train['weight_central'][y_train==1] *= (x_train['weight_central'][y_train==0].sum() / x_train['weight_central'][y_train==1].sum())
