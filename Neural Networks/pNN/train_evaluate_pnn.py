@@ -139,7 +139,7 @@ def read_dataframes(directory = '', signal_name = '',remove_masses = []):
 
         combine[col].replace(-9, pd.NA, inplace=True)
         add_to_test_df[col].replace(-9, pd.NA, inplace=True)
-        
+
         combine[col].fillna(column_means, inplace=True)
         add_to_test_df[col].fillna(column_means, inplace=True)
         
@@ -251,7 +251,7 @@ def getTrainTestSplit(combine_df,add_to_test_df = [],remove_masses = []):
     x_train['weight_central'][y_train==1] *= (x_train['weight_central'][y_train==0].sum() / x_train['weight_central'][y_train==1].sum())
     x_train['weight_central'] *= (len(x_train['weight_central']) / x_train['weight_central'].sum())
 
-    x_test['weight_central'][y_test==0] *= (x_test['weight_central'][y_test==1].sum() / x_test['weight_central'][y_test==0].sum())
+    x_test['weight_central'][y_test==1] *= (x_test['weight_central'][y_test==0].sum() / x_test['weight_central'][y_test==1].sum())
     x_test['weight_central'] *= (len(x_test['weight_central']) / x_test['weight_central'].sum())
 
 
@@ -279,8 +279,8 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
     train_df[features] = scaler.fit_transform(train_df[features])
     test_df[features] = scaler.transform(test_df[features])
 
-    print('train')
-    print(train_df['MX'])
+    print('test_df')
+    print(test_df)
     print(train_df.isna().sum().sum())
     print('test')
     print(test_df.isna().sum().sum())
@@ -364,7 +364,7 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
         output_score = best_model(torch.Tensor(X_test).to(device))
         output_score_train = best_model(torch.Tensor(X_train).to(device))
 
-    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs
+    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs,scaler
 
 
 
