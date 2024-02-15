@@ -130,7 +130,7 @@ for name in feature_list:
   plt.title('Receiver Operating Characteristic with Weights')
   plt.legend(loc="lower right")
   plt.show()
-
+#%%
 with open(f'{signal_name_}_AUC_Threshold.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
     w = csv.DictWriter(f, dict.keys())
     w.writeheader()
