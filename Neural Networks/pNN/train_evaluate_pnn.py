@@ -8,11 +8,13 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import mplhep as hep
 from sklearn.metrics import roc_curve, auc
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import copy
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 import random
+import os
+import joblib
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -272,12 +274,22 @@ def getTrainTestSplit(combine_df,add_to_test_df = [],remove_masses = []):
     return x_train,x_test
 
 
-def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=None, save_models=False, batch_size = 1024,nodes = [5],model_type = 'basic',scheduler_type='None'):
+def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=None, save_models=False, batch_size = 1024,nodes = [5],model_type = 'basic',scheduler_type='None',directory = ''):
     loss_f = lambda x, y: BCELoss(x,y)
+
+    # Check if the directory already exists
+    if not os.path.exists(directory):
+        # Create the directory
+        os.makedirs(directory)
+        print("Directory created successfully!")
+    else:
+        print("Directory already exists!")
 
     scaler = StandardScaler()
     train_df[features] = scaler.fit_transform(train_df[features])
     test_df[features] = scaler.transform(test_df[features])
+
+    joblib.dump(scaler, f'{directory}/scaler.save')
 
     print('test_df')
     print(test_df)
@@ -305,7 +317,7 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
     best_model = ""
 
 
-    patience = 3
+    patience = 5
     best_loss = float('inf')
     patience_counter = 0
     learning_rate_epochs=[]
@@ -327,11 +339,20 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
             loss.backward()
             optimiser.step()
 
+    
+        torch.save(model, f'{directory}/model_epoch_{i_epoch}.pth')  
+
         model.eval()
         models.append(copy.deepcopy(model))
 
         epoch_loss_train.append(getTotalLoss_no_weight(model, loss_f, X_train, y_train, w_train, batch_size))
         epoch_loss_test.append(getTotalLoss_no_weight(model, loss_f, X_test, y_test, w_test, batch_size))
+
+        np.save(f'{directory}/epoch_loss_train.npy', epoch_loss_train)
+        np.save(f'{directory}/epoch_loss_test.npy', epoch_loss_test)
+
+        print(f'Train Epoch Loss: {epoch_loss_train[-1]}')
+        print(f'Test Epoch Loss: {epoch_loss_test[-1]}')
  
         for param_group in optimiser.param_groups:
             lr_epoch= param_group['lr']
@@ -364,7 +385,7 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
         output_score = best_model(torch.Tensor(X_test).to(device))
         output_score_train = best_model(torch.Tensor(X_train).to(device))
 
-    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs,scaler
+    return models,epoch_loss_train,epoch_loss_test,output_score,output_score_train, learning_rate_epochs,scaler,best_epoch
 
 
 
