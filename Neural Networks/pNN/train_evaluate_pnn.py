@@ -155,7 +155,9 @@ def getWeightedBatches(arrays, batch_size=None):
     adjusted_weights = weights + offset
     sampling_prob = adjusted_weights / adjusted_weights.sum()
 
-    for _ in tqdm(range(0, length, batch_size)):
+  #  for _ in tqdm(range(0, length, batch_size)):
+    for _ in range(0, length, batch_size):
+
         chosen_indices = np.random.choice(indices, size=batch_size, p=sampling_prob)
         arrays_batch = [torch.Tensor(array[chosen_indices]).to(device) for array in arrays]
         yield arrays_batch
@@ -311,8 +313,11 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, outdir=
     learning_rate_epochs=[]
     best_epoch = 0
     #print(">> Training...")
-    for i_epoch in tqdm(range(0,epoch)):
-        print(f"Epoch {i_epoch}")
+#    for i_epoch in tqdm(range(0,epoch)):
+    for i_epoch in range(0,epoch):
+        #print(f"Epoch {i_epoch}")
+        if i_epoch%5 == 0:
+            print(f'Epoch: {i_epoch}' )
         total_loss = 0.0
         model.train()
         # if i_epoch%250 == 0:
