@@ -1,0 +1,15 @@
+{
+    "starting_learning_rate": 0.0001,
+    "maximum_epoch": 999999,
+    "batch_size": 4096,
+    "Architecture": [
+        50,
+        100,
+        100,
+        50
+    ],
+    "patience": 100,
+    "model_type": "char",
+    "scheduler_type": "Custom",
+    "scheduler_status": true
+}
