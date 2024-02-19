@@ -320,12 +320,6 @@ def trainNetwork_no_weights(train_df, test_df, features, lr,epoch = 200, save_mo
         os.makedirs(directory)
         print(f">> Directory exists, created directory: {directory} ...")
 
-    with open(f'{directory}/test_df.pkl', 'wb') as f:
-            pickle.dump(test_df, f)
-
-    with open(f'{directory}/train_df.pkl', 'wb') as f:
-            pickle.dump(train_df, f)
-
     model_info = {
         'starting_learning_rate': lr,
         'maximum_epoch': epoch,
