@@ -352,7 +352,7 @@ class affinePNN(nn.Module):
 
 
     def forward(self, data):
-        #data=
+        
         #print(self.variables)
         #x=data[]
         x=data[:, :-1]
